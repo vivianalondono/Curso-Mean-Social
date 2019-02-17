@@ -2,6 +2,7 @@
 var bcrypt = require("bcrypt-nodejs");
 var mongoosePaginate = require('mongoose-pagination');
 var User = require("../models/user");
+var Follow = require("../models/follow");
 var jwt = require('../services/jwt');
 var fs = require('fs'); //Librería file sistem de node js
 var path = require('path');
@@ -123,9 +124,37 @@ function getUser(req,res){
   User.findById(userId, (err, user) => {
     if(err) return res.status(500).send({message:'Error en la petición'});
     if(!user) return res.status(404).send({message:'El usuario no existe'});
-    return res.status(200).send({user});
-  })
+    //Verificar si sigo al usuario que estoy consultando o si el usuario me sigue
+    followThisUser(req.user.sub, userId).then((value) => {
+      user.password = undefined; 
+      return res.status(200).send({
+        user,
+        following: value.following,
+        followed: value.followed
+      });
+    });
+  });
   
+}
+
+//Función sincrona para retornar sigo a un usuario y si me sigue - devuelve una promesa
+async function followThisUser(identity_user_id, user_id){
+  var following = await Follow.findOne({ "user": identity_user_id, "followed": user_id }).exec().then((follow) => {
+    return follow;
+  }).catch((err) => {
+      return handleError(err);
+  });
+
+  var followed = await Follow.findOne({ "user": user_id, "followed": identity_user_id }).exec().then((follow) => {
+    return follow;
+  }).catch((err) => {
+      return handleError(err);
+  });
+
+  return{
+    following: following,
+    followed: followed
+  }
 }
 
 //Método para obtener todos los usuarios
@@ -142,12 +171,46 @@ function getUsers(req,res){
   User.find().sort('_id').paginate(page, itemsPerPage, (err, users, total) => {
     if(err) return res.status(500).send({message:'Error en la petición'});
     if(!users) return res.status(404).send({message:'No hay usuarios disponibles'});
-    return res.status(200).send({
-      users,
-      total,
-      pages: Math.ceil(total/itemsPerPage)
+    followUserIds(identity_user_id).then((value) => {
+      return res.status(200).send({
+        users,
+        uers_following: value.following,
+        users_follow_me: value.followed,
+        total,
+        pages: Math.ceil(total/itemsPerPage)
+      });
     });
+    
   });  
+}
+
+//Método para traer todos los usuarios con la información de si los usuarios e siguen
+async function followUserIds(user_id){
+  var following = await Follow.find({"user": user_id}).select({'_id': 0, '__uv': 0, 'user': 0}).exec().then((follows)=>{
+    var follows_clean=[];
+    follows.forEach((follow)=>{
+      follows_clean.push(follow.followed);
+    });
+    
+    return follows_clean;
+    }).catch((err)=>{
+      return handleerror(err);
+  });
+    
+  var followed = await Follow.find({"followed": user_id}).select({'_id': 0, '__uv': 0, 'followed': 0}).exec().then((follows)=>{
+    var follows_clean=[];
+    follows.forEach((follow)=>{
+      follows_clean.push(follow.user);
+    });
+    return follows_clean;
+    }).catch((err)=>{
+      return handleerror(err);
+  });
+
+  return{
+    following: following,
+    followed: followed
+  }
 }
 
 //Método para editar datos de usuario
@@ -226,6 +289,45 @@ function getImageFile(req, res){
   });
 }
 
+const getCounters = (req, res) => {
+  let userId = req.user.sub;
+  if(req.params.id){
+      userId = req.params.id;      
+  }
+  getCountFollow(userId).then((value) => {
+      return res.status(200).send(value);
+  })
+}
+
+//Método contador de usuarios que me siguen y que sigo
+async function getCountFollow(user_id){
+  try{
+    var following = await Follow.count({"user":user_id}).exec()
+    .then(count=>{
+      return count;
+    })
+    .catch((err)=>{
+      return handleError(err);
+    });
+  
+    var followed = await Follow.count({"followed":user_id}).exec()
+    .then(count=>{
+      return count;
+    })
+    .catch((err)=>{
+      return handleError(err);
+    });
+  
+    return {
+      following:following,
+      followed:followed
+    }
+  
+  }catch(e){
+    console.log(e);
+  }
+}
+
 module.exports = {
   home,
   pruebas,
@@ -235,5 +337,6 @@ module.exports = {
   getUsers,
   updateUser,
   uploadImage,
-  getImageFile
+  getImageFile,
+  getCounters
 };
