@@ -1,0 +1,14 @@
+/*Cabecera*/
+.navigation{
+    padding: 0px !important;
+}
+
+.navigation .navbar{
+    border-radius: 0px !important;
+    background: blueviolet;
+    border: none;
+}
+
+.navigation .navbar *{
+    color: black !important;
+}
