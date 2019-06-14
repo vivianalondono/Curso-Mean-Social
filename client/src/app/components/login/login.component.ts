@@ -38,6 +38,7 @@ export class LoginComponent implements OnInit {
         }else{
           this.status = 'success';
           //PERSISTIR DATOS DEL USUARIO
+          localStorage.setItem('identity', JSON.stringify(this.identity));
 
           //Conseguir el token
           this.getToken();
@@ -63,7 +64,7 @@ export class LoginComponent implements OnInit {
         }else{
           this.status = 'success';
           //PERSISTIR TOKEN DEL USUARIO
-
+          localStorage.setItem('token', this.token);
           //Conseguir los contadores o estadísticas del usuario
         }
       },

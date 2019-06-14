@@ -2,12 +2,13 @@
 <div class="navigation col-lg-12">
   <nav class="navbar navbar-default">
     <div class="container-fluid">
+
       <div class="navbar-header">
         <a href="#" class="navbar-brand">{{title}}</a>
       </div>
-      <ul class="nav navbar-var">
+      <ul class="nav navbar navbar-var" *ngIf="identity">
         <li>
-          <a href="#">
+          <a [routerLink]="['/home']" [routerLinkActive]="['active']">
             <span class="glyphicon glyphicon-home"></span>
             Inicio
           </a>
@@ -25,6 +26,20 @@
           </a>
         </li>
       </ul>
+      <ul class="nav navbar navbar-var navbar-right" *ngIf="!identity">
+          <li>
+            <a [routerLink]="['/login']" [routerLinkActive]="['active']">
+              <span class="glyphicon glyphicon-log-in"></span>
+              Login
+            </a>
+          </li>
+          <li>
+            <a [routerLink]="['/registro']" [routerLinkActive]="['active']">
+              <span class="glyphicon glyphicon-user"></span>
+              Registro
+            </a>
+          </li>
+        </ul>
     </div>
   </nav>
 </div>

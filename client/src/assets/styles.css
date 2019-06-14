@@ -8,6 +8,10 @@
     border-bottom: 1px solid #eee;
 }
 
+.active{
+    background: #9c1111;
+}
+
 /*Cabecera*/
 .navigation{
     padding: 0px !important;
@@ -21,4 +25,14 @@
 
 .navigation .navbar *{
     color: black !important;
+}
+
+.navigation .navbar a:hover{
+    background: #cc1717;
+}
+
+.jumbotron{
+    padding: 25px;
+    border-radius: 5px;
+    text-align: center;
 }
